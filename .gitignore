@@ -266,3 +266,25 @@ Temporary Items
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 
 # End of https://www.toptal.com/developers/gitignore/api/python,macos,django
+
+
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
+
