@@ -10,7 +10,7 @@ class Conversation(core_models.TimeStampedModel):
 
 
     def __str__(self) -> str:
-        return self.created_at
+        return f'{self.created_at}'
     pass
 
 
