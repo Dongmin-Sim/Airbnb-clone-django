@@ -6,5 +6,5 @@ from . import models
 class ReservationAdmin(admin.ModelAdmin):
 
     """ Reservation Admin Definition """
-    
-    pass
+
+    pass 
