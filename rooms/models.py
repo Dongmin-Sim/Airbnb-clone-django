@@ -1,14 +1,74 @@
 from django.db import models
 from django_countries.fields import CountryField
-from users import models as users_models
 from core import models as core_models
+
+
+class AbstractItem(core_models.TimeStampedModel):
+    
+    """ Abstract Item """
+
+    name = models.CharField(max_length=80)
+    
+
+    class Meta:
+        abstract = True
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class RoomType(AbstractItem):
+
+    """ RoomType Model Definition """
+    
+    class Meta:
+        verbose_name = 'Room Type'
+    pass
+
+
+class Amenity(AbstractItem):
+
+    """ Amenity Model Definition """
+    class Meta:
+        verbose_name_plural = 'Amenities'
+    pass
+
+
+class Facility(AbstractItem):
+
+    """ Facility Model Definition """
+    class Meta:
+        verbose_name_plural = 'Facilities'    
+    pass
+
+
+class HouseRule(AbstractItem):
+
+    """ HouseRule Model Definition """
+    class Meta:
+        verbose_name = 'House Rule'
+    pass
+
+
+class Photo(core_models.TimeStampedModel):
+    
+    """"""
+
+    caption = models.CharField(max_length=80)
+    file = models.ImageField()
+    room = models.ForeignKey("Room", on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return self.caption
+
+
 
 # Create your models here.
 class Room(core_models.TimeStampedModel):
     
     """ Room Model Definition """
 
-    host = models.ForeignKey(users_models.User, on_delete=models.CASCADE)
+    host = models.ForeignKey("users.User", on_delete=models.CASCADE)
     name = models.CharField(max_length=140)
     description = models.TextField()
     country = CountryField()
@@ -22,7 +82,11 @@ class Room(core_models.TimeStampedModel):
     check_in = models.TimeField(null=False)
     check_out = models.TimeField(null=False)
     instant_book = models.BooleanField(default=False)
+    room_type = models.ForeignKey("RoomType", on_delete=models.SET_NULL, null=True)
+    amenities = models.ManyToManyField("Amenity", blank=True)
+    facilities = models.ManyToManyField("Facility", blank=True)
+    house_rules = models.ManyToManyField("HouseRule", blank=True)
 
-
-   
+    def __str__(self) -> str:
+        return self.name
     
