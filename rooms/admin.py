@@ -7,6 +7,18 @@ from . import models
 class ItemAdmin(admin.ModelAdmin):
 
     """ Item Admin Definition """
+
+    list_display = (
+        "name",
+        "used_by",
+    )
+
+    # admin function
+    def used_by(self, obj):
+        # obj = queryset - 1row
+        return obj.rooms.count()
+
+
     pass
 
 
@@ -19,7 +31,26 @@ class RoomAdmin(admin.ModelAdmin):
     fieldsets = (
         (
             "Basic Info",
-            {"fields": ('name', 'description')}
+            {"fields": ("name", "description", "country", "address", "price")}
+        ),
+        (
+            "Times",
+            {"fields": ("check_in", "check_out", "instant_book")}
+        ),
+        (
+            "Spaces",
+            {"fields": ("guests", "beds", "bedrooms", "bath")}
+        ),
+        (
+            "More about the Space",
+            {
+                "classes": ("collapse",),
+                "fields": ("amenities", "facilities", "house_rules")
+            }
+        ),
+        (
+            "Last Details",
+            {"fields": ("host",)}
         ),
     )
 
@@ -36,9 +67,13 @@ class RoomAdmin(admin.ModelAdmin):
         "bath",
         "check_in",
         "check_out",
-        "instant_book"
+        "instant_book",
+        "count_amenities",
+        "count_photos"
     )
     
+    # ordering = ("name", "price", "bedrooms")
+
     list_filter = (
         'instant_book',
         'host__superhost',
@@ -66,6 +101,20 @@ class RoomAdmin(admin.ModelAdmin):
         'facilities',
         'house_rules',
     )
+
+    # admin function
+    def count_amenities(self, obj):
+        # obj == queryset의 원소 == 1 row
+        return obj.amenities.count()
+
+    count_amenities.short_description = "count amenities"
+
+    def count_photos(self, obj):
+        return obj.photos.count()
+
+    count_photos.short_description = "count photos"
+    
+
 
 
 @admin.register(models.Photo)
