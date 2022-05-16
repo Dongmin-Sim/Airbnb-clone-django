@@ -15,10 +15,22 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = custom_fieldsets + UserAdmin.fieldsets
     
 
-    custom_display = ('username', 'language', 'currency', 'superhost')
-    custom_filter = ('superhost', 'gender', 'language', 'currency', 'superhost')
 
-    list_display = custom_display + UserAdmin.list_display
-    list_filter = custom_filter + UserAdmin.list_filter
-    
-    
+    list_display = (
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "is_active",
+        "language",
+        "currency",
+        "superhost",
+        "is_staff",
+        "is_superuser"
+    ) 
+
+    custom_filter = (
+        "superhost",
+    )
+
+    list_filter = UserAdmin.list_filter + custom_filter
