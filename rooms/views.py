@@ -1,14 +1,13 @@
-
-from django import http
 from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, View
 from django.shortcuts import redirect, render
+from django.core.paginator import Paginator
 
 from django_countries import countries
 
-from . import models
+from . import models, forms
 
 
 # Create your views here.
@@ -40,99 +39,81 @@ def room_detail(request, pk):
         raise Http404()
 
 
-def search_view(request):
-    print('request get : ',request.GET)
+class SearchView(View):
+    def get(self, request):
+        print(request.get_full_path())
+        if request.GET.get('country'):
+            form = forms.SearchForm(request.GET)
 
-    # search를 위해 클라이언트로부터 받는 정보들
-    city = request.GET.get('city', 'Anywhere')
-    city = str.capitalize(city)
-    country_code = request.GET.get('country', "KR")
-    room_type = int(request.GET.get('room_type', 0))
-    price = int(request.GET.get('price', 0))
-    guests = int(request.GET.get('guests', 0))
-    bedrooms = int(request.GET.get('bedrooms', 0))
-    beds = int(request.GET.get('beds', 0))
-    baths = int(request.GET.get('baths', 0))
-    s_amenities = request.GET.getlist('amenities')
-    s_facilities = request.GET.getlist('facilities')
-    instant_book = bool(request.GET.get('instant_book', False))
-    superhost = bool(request.GET.get('superhost', False))
+            if form.is_valid():
+                
+                city =  form.cleaned_data.get('city')
+                country =  form.cleaned_data.get('country')
+                room_type =  form.cleaned_data.get('room_type')
+                price =  form.cleaned_data.get('price')
+                guests =  form.cleaned_data.get('guests')
+                bedrooms =  form.cleaned_data.get('bedrooms')
+                beds =  form.cleaned_data.get('beds')
+                bath =  form.cleaned_data.get('bath')
+                instant_book =  form.cleaned_data.get('instant_book')
+                superhost =  form.cleaned_data.get('superhost')
+                amenities =  form.cleaned_data.get('amenities')
+                facilities =  form.cleaned_data.get('facilities')
+                
 
-    form = {
-        'city': city,
-        'country_code': country_code,
-        's_room_type': room_type,    
-        "price": price,
-        "guests": guests,
-        "bedrooms": bedrooms,
-        "beds": beds,
-        "baths": baths,
-        "s_amenities": s_amenities,
-        "s_facilities": s_facilities,
-        'instant_book': instant_book,
-        'superhost': superhost,
-    }
+                filter_args = {}
 
+                if city != "Anywhere":
+                    filter_args["city__startswith"] = city
 
-    # 검색 필터에 들어갈, 서버->클라이언트에 표시될 정보들 
-    room_types = models.RoomType.objects.all()
-    amenities = models.Amenity.objects.all()
-    facilities = models.Facility.objects.all()
+                filter_args["country"] = country
 
-    choices = {
-        'countries': countries,
-        'room_types': room_types,
-        "amenities": amenities,
-        "facilities": facilities,
-    }
+                if room_type is not None:
+                    filter_args["room_type"] = room_type
 
+                if price is not None:
+                    filter_args["price__lte"] = price
 
-    # 검색 filter 
-    filter_args = {}
+                if guests is not None:
+                    filter_args["guests__gte"] = guests
 
-    if city != 'Anywhere':
-        filter_args['city__startswith'] = city
+                if bedrooms is not None:
+                    filter_args["bedrooms__gte"] = bedrooms
 
-    filter_args['country'] = country_code
+                if beds is not None:
+                    filter_args["beds__gte"] = beds
 
-    if room_type != 0:
-        filter_args['room_type__pk'] = room_type
+                if bath is not None:
+                    filter_args["bath__gte"] = bath
+
+                if instant_book is True:
+                    filter_args["instant_book"] = True
+
+                if superhost is True:
+                    filter_args["host__superhost"] = True
+
+                queryset = models.Room.objects.filter(**filter_args)
+
+                for amenity in amenities:
+                    # filter_args["amenities"] = amenity
+                    queryset = queryset.filter(amenities=amenity)
+
+                for facility in facilities:
+                    # filter_args["facilities"] = facility
+                    queryset = queryset.filter(facilities=facility)
+                
+                page = request.GET.get('page', 1)
+                queryset = queryset.order_by('-created_at')
+
+                paginator = Paginator(queryset, 3, orphans=1)
+
+                rooms = paginator.get_page(page)
+
+                return render(request, 'rooms/search.html', {'form': form, 'rooms': rooms})
+
+        else:
+            form = forms.SearchForm()
         
-    if price != 0:
-        filter_args['price__lte'] = price
-
-    if guests != 0:
-        filter_args['guests__gte'] = guests
-
-    if bedrooms != 0:
-        filter_args['bedrooms__gte'] = bedrooms
-
-    if beds != 0:
-        filter_args['beds__gte'] = beds
-
-    if baths != 0:
-        filter_args['baths__gte'] = baths
-
-    if len(s_amenities) > 0:
-        for s_amenity in s_amenities:
-            filter_args['amenities__pk'] = int(s_amenity)
-    if len(s_amenities) > 0:
-        for s_facility in s_facilities:
-            filter_args['facilities__pk'] = int(s_facility)
-
-    if instant_book is True:
-        filter_args['instant_book'] = True
-
-    if superhost is True:
-        filter_args['host__superhost'] = True
-
-
-    rooms = models.Room.objects.filter(**filter_args)
-
-    context = {
-        **form,
-        **choices,
-        'rooms': rooms,
-    }
-
-    return render(request, 'rooms/search.html', context)
+        # country 값이 있으면서 form 이 not valid 한 경우 
+        # country 값이 request에 없는 경우 /rooms/search/
+        return render(request, 'rooms/search.html', {'form': form})
