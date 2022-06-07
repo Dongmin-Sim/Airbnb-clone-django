@@ -1,31 +1,30 @@
-from cmath import log
-from django.urls import reverse
+from django.views.generic import FormView
+from django.urls import reverse, reverse_lazy
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.views import View
 from . import forms
 
 # Create your views here.
-class LoginView(View):
-    def get(self, request):
-        form = forms.LoginForm(initial={'email': 'codongmin@gmail.com'})
-        # NomadCoder1
-        return render(request, 'users/login.html', {'form':form})
+class LoginView(FormView):
+    template_name = 'users/login.html'
+    form_class = forms.LoginForm
+    initial = {
+        'email': 'codongmin@gmail.com'
+    }
+    success_url = reverse_lazy('core:home')
 
-    def post(self, request):
-        form = forms.LoginForm(request.POST)
+    def form_valid(self, form):
+        email = form.cleaned_data.get('email')
+        password = form.cleaned_data.get('password')
 
-        if form.is_valid():
-            email = form.cleaned_data.get('email')
-            password = form.cleaned_data.get('password')
+        user = authenticate(self.request, username=email, password=password)
 
-            user = authenticate(request, username=email, password=password)
+        if user is not None:
+            login(self.request, user)
+            
+        return super().form_valid(form)
 
-            if user is not None:
-                login(request, user)
-                return redirect(reverse('core:home'))
-
-        return render(request, 'users/login.html', {'form':form})
     
 def logout_view(request):
     logout(request)
