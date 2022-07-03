@@ -1,10 +1,11 @@
 from tkinter.tix import Form
+from xml.etree.ElementTree import SubElement
 from django.views.generic import FormView
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.views import View
-from . import forms
+from . import forms, models
 
 # Create your views here.
 class LoginView(FormView):
@@ -52,4 +53,22 @@ class SignUpView(FormView):
 
         if user is not None:
             login(self.request, user)
+
+        # send email 
+        user.verify_email()
+
         return super().form_valid(form)
+
+
+def complete_verification(request, key:str):
+    try:
+        user = models.User.objects.get(email_secret=key)
+        user.email_verified = True
+        # user.email_secret = ""
+        user.save()
+        # TODO : Add success message
+    except models.User.DoesNotExist:
+        # TODO : Add error message
+        print('no User')
+
+    return redirect(reverse('core:home'))

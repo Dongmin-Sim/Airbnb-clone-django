@@ -19,7 +19,7 @@ class CustomUserAdmin(UserAdmin):
     )
 
     custom_fieldsets = (
-        ('Custom Profile', {'fields': ('avatar', 'gender', 'bio', 'birthdate', 'language', 'currency', 'superhost')}),
+        ('Custom Profile', {'fields': ('avatar', 'gender', 'bio', 'birthdate', 'language', 'currency', 'superhost', 'email_verified', 'email_secret')}),
     )
 
     fieldsets = custom_fieldsets + UserAdmin.fieldsets
@@ -36,7 +36,9 @@ class CustomUserAdmin(UserAdmin):
         "currency",
         "superhost",
         "is_staff",
-        "is_superuser"
+        "is_superuser",
+        "email_verified",
+        "email_secret",
     ) 
 
     custom_filter = (
